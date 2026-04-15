@@ -114,102 +114,103 @@ export default function Home() {
     }
   };
 
-  return (
-<div style={styles.card}>
-  <h2>How You Get Paid</h2>
+ return (
+  <div style={styles.page}>
+    <div style={styles.container}>
+      <h1>Artist Protection Alliance</h1>
+      <p style={{ color: "#aaa" }}>
+        Tattoo Pricing Reality Check
+      </p>
 
-  <select
-    value={incomeType}
-    onChange={(e) => setIncomeType(e.target.value)}
-    style={styles.input}
-  >
-    <option value="percentage">Shop Percentage</option>
-    <option value="rental">Booth Rental</option>
-  </select>
+      {!showResults && (
+        <div style={styles.card}>
+          <h2>Enter your email to unlock your results</h2>
 
-  {incomeType === "percentage" && (
-    <Input
-      label="Shop Percentage (0.5 = 50%)"
-      value={shopPercentage}
-      setValue={setShopPercentage}
-    />
-  )}
+          <input
+            type="email"
+            placeholder="Enter your email"
+            value={email}
+            onChange={(e) => setEmail(e.target.value)}
+            style={styles.input}
+          />
 
-  <Input
-    label="Your Hourly Rate"
-    value={hourlyRate}
-    setValue={setHourlyRate}
-  />
-</div>
-        )}
+          <button onClick={handleSubmit} style={styles.button}>
+            See My Results
+          </button>
+        </div>
+      )}
 
-        {showResults && (
-          <div style={{ display: "grid", gap: "20px" }}>
-            <div style={styles.card}>
-              <h2>Location</h2>
-              <select
-                value={state}
-                onChange={(e) => setState(e.target.value)}
-                style={styles.input}
-              >
-                {Object.keys(stateTaxes).map((s) => (
-                  <option key={s} value={s}>
-                    {s} ({(stateTaxes[s] * 100).toFixed(2)}%)
-                  </option>
-                ))}
-              </select>
+      {showResults && (
+        <div style={{ display: "grid", gap: "20px" }}>
+
+          <div style={styles.card}>
+            <h2>How You Get Paid</h2>
+
+            <select
+              value={incomeType}
+              onChange={(e) => setIncomeType(e.target.value)}
+              style={styles.input}
+            >
+              <option value="percentage">Shop Percentage</option>
+              <option value="rental">Booth Rental</option>
+            </select>
+
+            {incomeType === "percentage" && (
+              <Input
+                label="Shop Percentage (0.5 = 50%)"
+                value={shopPercentage}
+                setValue={setShopPercentage}
+              />
+            )}
+
+            <Input
+              label="Your Hourly Rate"
+              value={hourlyRate}
+              setValue={setHourlyRate}
+            />
+          </div>
+
+          <div style={styles.card}>
+            <h2>Your Results</h2>
+
+            <p>Your hourly rate: <strong>{hourlyRate}</strong></p>
+
+            <p>
+              After shop split, taxes, and expenses:
+              <br />
+              <strong>${results.actualHourly.toFixed(2)}/hr</strong>
+            </p>
+
+            <p>
+              Annual income (real): ${results.yearlyIncome.toFixed(0)}
+            </p>
+
+            <hr style={{ margin: "15px 0", borderColor: "#333" }} />
+
+            <p>
+              To hit your goal:
+              <br />
+              <strong>${results.recommendedHourly.toFixed(0)}/hr</strong>
+            </p>
+
+            {results.underpricingAmount > 0 && (
+              <div style={styles.warningBig}>
+                ⚠️ You are undercharging by ${results.underpricingAmount.toFixed(0)}/hr
+              </div>
+            )}
+
+            <div style={{ marginTop: "20px", fontSize: "20px" }}>
+              <span>🎯 Your Tattoo Business Score: </span>
+              <strong>{results.score}/100</strong>
             </div>
 
-            <div style={styles.card}>
-              <h2>Inputs</h2>
+          </div>
 
-              <Input label="Shop Rent" value={monthlyRent} setValue={setMonthlyRent} />
-              <Input label="Supplies" value={supplies} setValue={setSupplies} />
-              <Input label="Insurance" value={insurance} setValue={setInsurance} />
-              <Input label="Misc Costs" value={misc} setValue={setMisc} />
-              <Input label="Desired Monthly Income" value={desiredIncome} setValue={setDesiredIncome} />
-              <Input label="Hours Per Week" value={hoursPerWeek} setValue={setHoursPerWeek} />
-              <Input label="Weeks Per Month" value={weeksPerMonth} setValue={setWeeksPerMonth} />
-              <Input label="Booking Rate (0-1)" value={bookingRate} setValue={setBookingRate} />
-            </div>
-                
-<div style={styles.card}>
-  <h2>Your Results</h2>
-
-  <p>Your hourly rate: <strong>{hourlyRate}</strong></p>
-
-  <p>
-    After shop split, taxes, and expenses:
-    <br />
-    <strong>${results.actualHourly.toFixed(2)}/hr</strong>
-  </p>
-
-  <p>
-    Annual income (real): ${results.yearlyIncome.toFixed(0)}
-  </p>
-
-  <hr style={{ margin: "15px 0", borderColor: "#333" }} />
-
-  <p>
-    To hit your goal:
-    <br />
-    <strong>${results.recommendedHourly.toFixed(0)}/hr</strong>
-  </p>
-
-  {results.underpricingAmount > 0 && (
-    <div style={styles.warningBig}>
-      ⚠️ You are undercharging by ${results.underpricingAmount.toFixed(0)}/hr
+        </div>
+      )}
     </div>
-  )}
-
-  <div style={{ marginTop: "20px", fontSize: "20px" }}>
-    <span>🎯 Your Tattoo Business Score: </span>
-    <strong>{results.score}/100</strong>
   </div>
-</div>
-      </div>
-    </div>
-  );
+);
 }
 
 function Input({ label, value, setValue }) {
