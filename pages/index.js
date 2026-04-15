@@ -11,6 +11,10 @@ const stateTaxes = {
   OR: 0.0,
 };
 
+const [hourlyRate, setHourlyRate] = useState(150);
+const [incomeType, setIncomeType] = useState("percentage");
+const [shopPercentage, setShopPercentage] = useState(0.5);
+
 export default function Home() {
   const [state, setState] = useState("AZ");
   const [email, setEmail] = useState("");
@@ -26,48 +30,64 @@ export default function Home() {
   const [bookingRate, setBookingRate] = useState(0.7);
 
   const results = useMemo(() => {
-    const taxRate = stateTaxes[state] || 0;
+  const taxRate = stateTaxes[state] || 0;
 
-    const monthlyCosts = monthlyRent + supplies + insurance + misc;
-    const totalTarget = monthlyCosts + desiredIncome;
-    const availableHours = hoursPerWeek * weeksPerMonth * bookingRate;
+  const availableHours = hoursPerWeek * weeksPerMonth * bookingRate;
+  const grossMonthly = hourlyRate * availableHours;
 
-    const preTaxHourly =
-      availableHours > 0 ? totalTarget / availableHours : 0;
+  let afterShopIncome;
 
-    const taxAdjustedHourly = preTaxHourly * (1 + taxRate);
+  if (incomeType === "percentage") {
+    afterShopIncome = grossMonthly * (1 - shopPercentage);
+  } else {
+    afterShopIncome = grossMonthly - monthlyRent;
+  }
 
-    const breakEvenRate =
-      availableHours > 0 ? monthlyCosts / availableHours : 0;
+  const afterExpenses =
+    afterShopIncome - supplies - insurance - misc;
 
-    const avgTattooPrice = taxAdjustedHourly * 3;
+  const afterTax = afterExpenses * (1 - taxRate);
 
-    const assumedRate = 150;
-    const underpricingAmount = taxAdjustedHourly - assumedRate;
+  const actualHourly =
+    availableHours > 0 ? afterTax / availableHours : 0;
 
-    const yearlyLoss =
-      underpricingAmount > 0
-        ? underpricingAmount * availableHours * 12
-        : 0;
+  const yearlyIncome = afterTax * 12;
 
-    return {
-      taxAdjustedHourly,
-      breakEvenRate,
-      avgTattooPrice,
-      underpricingAmount,
-      yearlyLoss,
-    };
-  }, [
-    state,
-    monthlyRent,
-    supplies,
-    insurance,
-    misc,
-    desiredIncome,
-    hoursPerWeek,
-    weeksPerMonth,
-    bookingRate,
-  ]);
+  const targetYearly = desiredIncome * 12;
+
+  const recommendedHourly =
+    availableHours > 0
+      ? (targetYearly / 12) / availableHours / (1 - taxRate)
+      : 0;
+
+  const underpricingAmount = recommendedHourly - hourlyRate;
+
+  let score = 100;
+  if (underpricingAmount > 0) score -= 40;
+  if (bookingRate < 0.7) score -= 20;
+  if (score < 0) score = 0;
+
+  return {
+    actualHourly,
+    yearlyIncome,
+    recommendedHourly,
+    underpricingAmount,
+    score,
+  };
+}, [
+  hourlyRate,
+  incomeType,
+  shopPercentage,
+  monthlyRent,
+  supplies,
+  insurance,
+  misc,
+  desiredIncome,
+  hoursPerWeek,
+  weeksPerMonth,
+  bookingRate,
+  state,
+]);
 
   const handleSubmit = async () => {
     if (!email) {
@@ -95,29 +115,32 @@ export default function Home() {
   };
 
   return (
-    <div style={styles.page}>
-      <div style={styles.container}>
-        <h1>Artist Protection Alliance</h1>
-        <p style={{ color: "#aaa" }}>
-          Tattoo Pricing Calculator — Stop Undercharging
-        </p>
+<div style={styles.card}>
+  <h2>How You Get Paid</h2>
 
-        {!showResults && (
-          <div style={styles.card}>
-            <h2>Enter your email to unlock your pricing</h2>
+  <select
+    value={incomeType}
+    onChange={(e) => setIncomeType(e.target.value)}
+    style={styles.input}
+  >
+    <option value="percentage">Shop Percentage</option>
+    <option value="rental">Booth Rental</option>
+  </select>
 
-            <input
-              type="email"
-              placeholder="Enter your email"
-              value={email}
-              onChange={(e) => setEmail(e.target.value)}
-              style={styles.input}
-            />
+  {incomeType === "percentage" && (
+    <Input
+      label="Shop Percentage (0.5 = 50%)"
+      value={shopPercentage}
+      setValue={setShopPercentage}
+    />
+  )}
 
-            <button onClick={handleSubmit} style={styles.button}>
-              See My Pricing
-            </button>
-          </div>
+  <Input
+    label="Your Hourly Rate"
+    value={hourlyRate}
+    setValue={setHourlyRate}
+  />
+</div>
         )}
 
         {showResults && (
@@ -153,25 +176,33 @@ export default function Home() {
             <div style={styles.card}>
               <h2>Your Results</h2>
 
-              {results.yearlyLoss > 0 && (
-                <div style={styles.warningBig}>
-                  💸 You could be losing <strong>${results.yearlyLoss.toFixed(0)}/year</strong>
-                </div>
-              )}
+<p>Your hourly rate: <strong>${hourlyRate}</strong></p>
 
-              {results.underpricingAmount > 0 && (
-                <div style={styles.warningSmall}>
-                  ⚠️ Undercharging by ${results.underpricingAmount.toFixed(2)}/hr
-                </div>
-              )}
+<p>
+  After shop split, taxes, and expenses:<br />
+  <strong>You actually earn: ${results.actualHourly.toFixed(2)}/hr</strong>
+</p>
 
-              <p>
-                Tax Adjusted Rate:{" "}
-                <strong>${results.taxAdjustedHourly.toFixed(2)}/hr</strong>
-              </p>
-              <p>Break-even Rate: ${results.breakEvenRate.toFixed(2)}/hr</p>
-              <p>Suggested 3hr Tattoo: ${results.avgTattooPrice.toFixed(2)}</p>
-            </div>
+<p>
+  Annual income (real): ${results.yearlyIncome.toFixed(0)}
+</p>
+
+<hr style={{ margin: "15px 0", borderColor: "#333" }} />
+
+<p>
+  To hit your goal:<br />
+  <strong>You should charge: ${results.recommendedHourly.toFixed(0)}/hr</strong>
+</p>
+
+{results.underpricingAmount > 0 && (
+  <div style={styles.warningBig}>
+    ⚠️ You are undercharging by ${results.underpricingAmount.toFixed(0)}/hr
+  </div>
+)}
+
+<div style={{ marginTop: "20px", fontSize: "20px" }}>
+  🎯 Your Tattoo Business Score: <strong>{results.score}/100</strong>
+</div>
           </div>
         )}
       </div>
