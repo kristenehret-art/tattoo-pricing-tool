@@ -172,6 +172,7 @@ export default function Home() {
               <Input label="Weeks Per Month" value={weeksPerMonth} setValue={setWeeksPerMonth} />
               <Input label="Booking Rate (0-1)" value={bookingRate} setValue={setBookingRate} />
             </div>
+                
 <div style={styles.card}>
   <h2>Your Results</h2>
 
@@ -206,8 +207,6 @@ export default function Home() {
     <strong>{results.score}/100</strong>
   </div>
 </div>
-         
-        )}
       </div>
     </div>
   );
