@@ -201,9 +201,9 @@ export default function Home() {
 )}
 
 <div style={{ marginTop: "20px", fontSize: "20px" }}>
-  🎯 Your Tattoo Business Score: <strong>{results.score}/100</strong>
+  <span>🎯 Your Tattoo Business Score: </span>
+  <strong>{results.score}/100</strong>
 </div>
-          </div>
         )}
       </div>
     </div>
