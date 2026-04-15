@@ -1,5 +1,4 @@
 import { useMemo, useState } from "react";
-import { supabase } from "@/lib/supabase";
 
 const stateTaxes = {
   AZ: 0.056,
@@ -36,21 +35,21 @@ export default function Home() {
     const availableHours = hoursPerWeek * weeksPerMonth * bookingRate;
     const grossMonthly = hourlyRate * availableHours;
 
-    let afterShopIncome =
-      incomeType === "percentage"
-        ? grossMonthly * (1 - shopPercentage)
-        : grossMonthly - monthlyRent;
+    let afterShopIncome;
 
-    const afterExpenses =
-      afterShopIncome - supplies - insurance - misc;
+    if (incomeType === "percentage") {
+      afterShopIncome = grossMonthly * (1 - shopPercentage);
+    } else {
+      afterShopIncome = grossMonthly - monthlyRent;
+    }
 
+    const afterExpenses = afterShopIncome - supplies - insurance - misc;
     const afterTax = afterExpenses * (1 - taxRate);
 
     const actualHourly =
       availableHours > 0 ? afterTax / availableHours : 0;
 
     const yearlyIncome = afterTax * 12;
-
     const targetYearly = desiredIncome * 12;
 
     const recommendedHourly =
@@ -87,55 +86,10 @@ export default function Home() {
     state,
   ]);
 
-  const handleSubmit = async () => {
-    if (!email) {
-      alert("Enter your email to continue");
-      return;
-    }
-
-    try {
-      const { error } = await supabase.from("leads").insert([
-        {
-          email: email.trim(),
-          state,
-          source: "Tattoo Pricing Tool",
-        },
-      ]);
-
-      if (error) throw error;
-
-      setShowResults(true);
-    } catch (err) {
-      console.error(err);
-      alert("Something went wrong. Try again.");
-    }
-  };
-
   return (
     <div style={styles.container}>
-      <h1>Artist Protection Alliance</h1>
-      <p style={{ color: "#aaa" }}>
-        Tattoo Pricing Reality Check
-      </p>
-
-      {!showResults && (
-        <div style={styles.card}>
-          <h2>Enter your email to unlock results</h2>
-
-          <input
-            type="email"
-            placeholder="Email"
-            value={email}
-            onChange={(e) => setEmail(e.target.value)}
-            style={styles.input}
-          />
-
-          <button onClick={handleSubmit} style={styles.button}>
-            See My Results
-          </button>
-        </div>
-      )}
-
+      
+      {/* INPUT SECTION */}
       <div style={styles.card}>
         <h2>How You Get Paid</h2>
 
@@ -149,29 +103,30 @@ export default function Home() {
         </select>
 
         <Input
-          label="Hourly Rate"
+          label="Your Hourly Rate"
           value={hourlyRate}
           setValue={setHourlyRate}
         />
       </div>
 
+      {/* RESULTS */}
       {showResults && (
         <div style={styles.card}>
-          <h2>Results</h2>
+          <h2>Your Results</h2>
 
-          <p>Hourly Rate: ${hourlyRate}</p>
+          <p>Your hourly rate: ${hourlyRate}</p>
 
           <p>
-            Actual Hourly: $
-            {results.actualHourly.toFixed(2)}
+            Actual hourly:{" "}
+            <strong>${results.actualHourly.toFixed(2)}</strong>
           </p>
 
           <p>
-            Yearly Income: ${results.yearlyIncome.toFixed(0)}
+            Yearly income: ${results.yearlyIncome.toFixed(0)}
           </p>
 
           <p>
-            Recommended: $
+            Recommended hourly: $
             {results.recommendedHourly.toFixed(0)}
           </p>
 
@@ -188,62 +143,3 @@ export default function Home() {
     </div>
   );
 }
-
-function Input({ label, value, setValue }) {
-  return (
-    <div style={{ marginTop: "10px" }}>
-      <label style={{ fontSize: "12px", color: "#aaa" }}>
-        {label}
-      </label>
-      <input
-        type="number"
-        value={value}
-        onChange={(e) => setValue(Number(e.target.value))}
-        style={{
-          width: "100%",
-          padding: "8px",
-          marginTop: "4px",
-          borderRadius: "6px",
-        }}
-      />
-    </div>
-  );
-}
-
-const styles = {
-  container: {
-    maxWidth: "900px",
-    margin: "0 auto",
-    padding: "40px",
-    fontFamily: "Arial",
-    background: "#0f0f0f",
-    color: "white",
-    minHeight: "100vh",
-  },
-  card: {
-    background: "#1a1a1a",
-    padding: "20px",
-    borderRadius: "12px",
-    marginTop: "20px",
-  },
-  input: {
-    width: "100%",
-    padding: "10px",
-    marginTop: "10px",
-    borderRadius: "6px",
-  },
-  button: {
-    marginTop: "10px",
-    padding: "12px",
-    width: "100%",
-    background: "orange",
-    border: "none",
-    borderRadius: "6px",
-  },
-  warningBig: {
-    background: "#3a0000",
-    padding: "15px",
-    borderRadius: "8px",
-    marginTop: "10px",
-  },
-};
